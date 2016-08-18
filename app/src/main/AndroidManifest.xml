@@ -2,13 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sms1516.porcelli.daniele.wichat">
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"
+        android:required="true" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"
+        android:required="true" />
+    <uses-permission android:name="android.permission.INTERNET"
+        android:required="true" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".SplashScreen">
+        <activity android:name=".SplashScreen"
+            android:theme="@style/FullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

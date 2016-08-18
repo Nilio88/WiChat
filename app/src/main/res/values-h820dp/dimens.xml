@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dimensioni dei componenti grafici per dispositivi con altezza superiore ai 820 dp -->
+    <dimen name="logo_height">400dp</dimen>
+    <dimen name="logo_width">400dp</dimen>
+
+</resources>
