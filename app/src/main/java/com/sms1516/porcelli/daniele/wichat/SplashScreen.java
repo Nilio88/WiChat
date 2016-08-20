@@ -5,7 +5,14 @@ import android.os.Bundle;
 import android.view.View;
 import java.lang.Thread;
 import android.util.Log;
+import android.content.Intent;
 
+/** Questa classe ha come unico scopo la visualizzazione
+ * di uno splash screen con il logo dell'applicazione
+ * prima di accedere alla schermata principale dell'applicazione.
+ *
+ * @author Daniele Porcelli
+*/
 public class SplashScreen extends AppCompatActivity {
 
     //Costante per il tag di log
@@ -30,13 +37,19 @@ public class SplashScreen extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        //Mette in pausa lo splash screen
+        //Mette in pausa lo splash screen e avvia l'activity principale
         try {
             Thread.sleep(PAUSA);
+            startActivity(new Intent(this, MainActivity.class));
         }
+
         catch (InterruptedException ex) {
-            //In caso di interruzione, chiude l'applicazione
             Log.e(TAG_LOG, ex.toString());
+        }
+
+        finally {
+
+            //In ogni caso, termina l'activity dello splash screen
             finish();
         }
     }
