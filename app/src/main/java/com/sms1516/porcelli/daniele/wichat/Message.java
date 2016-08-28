@@ -1,5 +1,7 @@
 package com.sms1516.porcelli.daniele.wichat;
 
+import java.io.Serializable;
+
 /**
  * Questa classe rappresentà l'entità messaggio.
  * Un messaggio è definito da un mittente e da
@@ -7,7 +9,7 @@ package com.sms1516.porcelli.daniele.wichat;
  *
  * @author Daniele Porcelli
  */
-public class Message {
+public class Message implements Serializable {
 
     private String sender;
     private String text;

@@ -16,4 +16,13 @@ public interface MessagesListener {
      * @param message Il messaggio ricevuto.
      */
     public void onMessageReceived(Message message);
+
+    /**
+     * Metodo accessore che permette di ottenere il destinatario
+     * dei messaggi inviati dall'activity che implementa questa
+     * interfaccia.
+     *
+     * @return Il nome del destinatario dei messaggi.
+     */
+    public String getRecipient();
 }
