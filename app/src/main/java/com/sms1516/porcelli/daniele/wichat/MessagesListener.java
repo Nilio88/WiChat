@@ -1,5 +1,7 @@
 package com.sms1516.porcelli.daniele.wichat;
 
+import java.io.Serializable;
+
 /**
  * Questa interfaccia verrà usata dal servizio WiChatService
  * per astrarre l'attività che si registrerà come listener dei
@@ -7,7 +9,7 @@ package com.sms1516.porcelli.daniele.wichat;
  *
  * @author Daniele Porcelli
  */
-public interface MessagesListener {
+public interface MessagesListener extends Serializable {
 
     /**
      * Metodo di callback invocato quando viene ricevuto
