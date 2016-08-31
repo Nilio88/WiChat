@@ -140,7 +140,7 @@ public class WiChatService extends Service {
         else if (intent.getAction().equals(ACTION_CONNECT_TO_CLIENT)) {
 
             //Recupera l'indirizzo MAC del dispositivo a cui connettersi
-            String device = intent.getStringExtra(ACTION_CONNECT_TO_CLIENT_EXTRA);
+            final String device = intent.getStringExtra(ACTION_CONNECT_TO_CLIENT_EXTRA);
 
             //Si connette con il dispositivo tramite Wi-Fi direct
             WifiP2pConfig config = new WifiP2pConfig();
@@ -154,11 +154,13 @@ public class WiChatService extends Service {
                 @Override
                 public void onSuccess() {
                     //Tutto ok, nulla da fare.
+                    //Viene mandato l'intent di broadcast WIFI_P2P_CONNECTION_CHANGED_ACTION
                 }
 
                 @Override
                 public void onFailure(int reason) {
                     Log.e(LOG_TAG, "Impossibile collegarsi con il client tramite Wi-Fi P2P.");
+                    mContactsListener.onContactDisconnected(device);
                 }
             });
         }
