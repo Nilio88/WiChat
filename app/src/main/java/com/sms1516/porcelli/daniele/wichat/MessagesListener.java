@@ -27,4 +27,11 @@ public interface MessagesListener extends Serializable {
      * @return Il nome del destinatario dei messaggi.
      */
     public String getRecipient();
+
+    /**
+     * Metodo di callback invocato quando il dispositivo remoto
+     * con cui si sta comunicando si è disconnesso (fuori portata,
+     * Wi-Fi spento o dispositivo spento).
+     */
+    public void onContactDisconnected();
 }

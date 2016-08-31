@@ -886,9 +886,16 @@ public class WiChatService extends Service {
                 connections.remove(this);
             }
 
-            //Informa l'activity della rimozione del dispositivo
+            //Informa le activity della rimozione del dispositivo
             synchronized (mContactsListener) {
                 mContactsListener.onContactDisconnected(macAddress);
+            }
+
+            if (mMessagesListener != null) {
+                synchronized (mMessagesListener) {
+                    if (mMessagesListener.getRecipient().equals(macAddress))
+                        mMessagesListener.onContactDisconnected();
+                }
             }
         }
     }
