@@ -2,13 +2,6 @@ package com.sms1516.porcelli.daniele.wichat;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.EOFException;
 
 /**
  * Questa Activity ha lo scopo di visualizzare i messaggi

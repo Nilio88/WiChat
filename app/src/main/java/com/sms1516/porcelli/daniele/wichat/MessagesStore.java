@@ -56,8 +56,6 @@ public class MessagesStore {
      * Salva in memoria interna il messaggio ricevuto.
      *
      * @param message Il messaggio ricevuto
-     * @throws IOException Se si verifica un errore durante l'apertura del file
-     * o durante la scrittura del messaggio su di esso.
      */
     public synchronized void saveMessage(Message message) {
 
@@ -119,7 +117,6 @@ public class MessagesStore {
      * Salva una lista di messaggi nella memoria interna.
      *
      * @param messageList La lista di messaggi da salvare.
-     * @throws IOException Quando si verifica un errore durante le operazioni di I/O.
      */
     public synchronized void saveMessagesList(List<Message> messageList) {
 
@@ -178,6 +175,16 @@ public class MessagesStore {
         }
     }
 
+    /**
+     * Restituisce la lista dei messaggi ricevuti dal (e inviati al)
+     * dispositivo indicato dal suo indirizzo MAC.
+     *
+     * @param device L'indirizzo MAC del dispositivo di cui si vuole ottenere
+     *               la cronologia dei messaggi ricevuti/inviati (compresi anche i
+     *               messaggi ricevuti ma non ancora letti).
+     * @return Un'istanza della classe List contenente tutti i messaggi ricevuti/inviati
+     * al dispositivo.
+     */
     public synchronized List<Message> loadMessagesList(String device) {
         List<Message> messagesList = new LinkedList<>();
 
@@ -225,6 +232,14 @@ public class MessagesStore {
         return messagesList;
     }
 
+    /**
+     * Restituisce l'istanza di MessageStore da utilizzare per salvare
+     * e caricare i messaggi.
+     * @return L'unica istanza di MessageStore.
+     * @throws MessagesStoreNotInitializedException Eccezione non controllata lanciata quando
+     * si cerca di ottenere l'istanza di MessageStore senza prima averla inizializzata
+     * con MessagesStore.initialize(Context).
+     */
     public static MessagesStore getInstance() throws MessagesStoreNotInitializedException {
         if (instance != null)
             return instance;
