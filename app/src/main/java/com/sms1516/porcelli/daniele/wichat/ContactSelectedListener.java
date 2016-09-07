@@ -15,7 +15,7 @@ public interface ContactSelectedListener {
      * presente nel fragment.
      *
      * @param contact Il contatto selezionato dalla lista del fragment, rappresentato
-     *                in modo univoco.
+     *                dal suo indirizzo MAC.
      */
     public void onContactSelected(String contact);
 }
