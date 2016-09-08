@@ -9,7 +9,7 @@ import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
-import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.Profile;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiInfo;
@@ -20,6 +20,7 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.content.BroadcastReceiver;
+import android.database.Cursor;
 
 import java.io.EOFException;
 import java.lang.Thread;
@@ -560,13 +561,15 @@ public class WiChatService extends Service {
 
             int port = server.getLocalPort();
 
+            //Ottiene il nome del proprietario di questo dispositivo Android
+            Cursor cursor = getContentResolver().query(Profile.CONTENT_URI, null, null, null, null);
+            cursor.moveToFirst();
+            String proprietario = cursor.getString(cursor.getColumnIndex("display_name"));
+
             //Crea il TXT record da inviare agli altri dispositivi che hanno installato WiChat
             Map<String, String> txtRecord = new HashMap<>();
             txtRecord.put(LISTEN_PORT, String.valueOf(port));
-            txtRecord.put(NICKNAME, StructuredName.DISPLAY_NAME);
-
-            //Istruzione posta per motivi di debug
-            Log.d(LOG_TAG, "DISPLAY_NAME: " + StructuredName.DISPLAY_NAME);
+            txtRecord.put(NICKNAME, proprietario);
 
             //Crea l'oggetto che conterrà le informazioni riguardo il servizio
             WifiP2pDnsSdServiceInfo serviceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, "_presence._tcp", txtRecord);
