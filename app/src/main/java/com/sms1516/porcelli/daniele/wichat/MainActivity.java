@@ -3,15 +3,12 @@ package com.sms1516.porcelli.daniele.wichat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Build;
+import android.transition.ChangeBounds;
 import android.view.View;
 import android.content.Intent;
 import android.app.ActivityOptions;
 import java.util.HashMap;
 import java.util.List;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 
 /** Questa classe rappresenta l'activity principale.
@@ -32,6 +29,13 @@ public class MainActivity extends AppCompatActivity implements ContactSelectedLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Controlla se la versione di Android è maggiore
+        //o uguale alla API Level 21 (Lollipop) e, in tal caso,
+        //registra la transizione animata per questa activity.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setSharedElementExitTransition(new ChangeBounds());
+        }
+
     }
 
     @Override
@@ -51,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements ContactSelectedLi
             View commonView = null;
             //commonView = fragment.getView(contact) ad esempio
 
-            Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(this, commonView, "contact").toBundle();
+            Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(this, commonView, getResources().getString(R.string.contact_transition_name)).toBundle();
 
             //Chiama l'activity con la transizione animata.
             startActivity(intent, bundle);

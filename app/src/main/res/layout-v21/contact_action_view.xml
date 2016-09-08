@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:transitionName="@string/contact_transition_name">
+
+    <!-- In questa ImageView andrà una piccola foto dell'utente con cui si sta comunicando -->
+    <!-- Per default mettiamo un'icona già fatta. -->
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_person_white_36dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username"
+        android:textColor="#FFF"
+        android:layout_gravity="center_vertical"/>
+
+</LinearLayout>
