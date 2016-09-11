@@ -65,7 +65,7 @@ public class WiChatService extends Service {
     private IntentFilter mIntentFilter;
     private Thread mNsdService;
     private MessagesStore mMessagesStore;
-    private List peers = new ArrayList();
+    //private List peers = new ArrayList();
     private ContactsListener mContactsListener;
     private MessagesListener mMessagesListener;
     private List<ChatConnection> connections = new ArrayList<>();
@@ -101,7 +101,7 @@ public class WiChatService extends Service {
 
     private static final String ACTION_SEND_MESSAGE = "com.sms1516.porcelli.daniele.wichat.action.ACTION_SEND_MESSAGE";
     private static final String ACTION_SEND_MESSAGE_EXTRA = "com.sms1516.porcelli.daniele.wichat.action.ACTION_SEND_MESSAGE_EXTRA";
-    private static final String ACTION_SEND_MESSAGE_RECIPIENT_EXTRA = "com.sms1516.porcelli.daniele.wichat.action.ACTION_SEND_MESSAGE_EXTRA";
+    private static final String ACTION_SEND_MESSAGE_RECIPIENT_EXTRA = "com.sms1516.porcelli.daniele.wichat.action.ACTION_SEND_MESSAGE_RECIPIENT_EXTRA";
 
 
     @Override
@@ -405,7 +405,7 @@ public class WiChatService extends Service {
 
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
-
+                /*
                 //Elimina tutti i vecchi dispositivi trovati e inserisce quelli nuovi
                 peers.clear();
                 peers.addAll(peerList.getDeviceList());
@@ -413,7 +413,7 @@ public class WiChatService extends Service {
                 //Manda la lista dei dispositivi appena trovati all'activity interessata
                 if (mContactsListener != null)
                     //mContactsListener.onContactsListChanged(peers);
-                ;
+                ;*/
             }
         };
 
