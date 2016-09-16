@@ -24,6 +24,9 @@ public class BootReceiver extends BroadcastReceiver {
 
             //Avvia il servizio WiChatService
             context.startService(new Intent(context, WiChatService.class));
+
+            //Inizializza il MessagesStore
+            MessagesStore.initialize(context);
         }
     }
 }

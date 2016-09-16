@@ -6,18 +6,16 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.WpsInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.provider.ContactsContract.Profile;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiInfo;
 import android.util.Log;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.os.IBinder;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
-import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.content.BroadcastReceiver;
 import android.database.Cursor;
@@ -26,13 +24,9 @@ import java.io.EOFException;
 import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetAddress;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
@@ -65,6 +59,7 @@ public class WiChatService extends Service {
     private IntentFilter mIntentFilter;
     private Thread mNsdService;
     private MessagesStore mMessagesStore;
+    private String thisDeviceMAC;
     //private List peers = new ArrayList();
     private ContactsListener mContactsListener;
     private MessagesListener mMessagesListener;
@@ -80,6 +75,9 @@ public class WiChatService extends Service {
 
     //Costante per il Log
     private static final String LOG_TAG = WiChatService.class.getName();
+
+    //Testo per identificare il messaggio dummy
+    private static final String DUMMY_MESSAGE ="!DUMMYMESSAGE";
 
     //Costanti per le azioni e i parametri degli intent
     private static final String ACTION_START_NSD_SERVICE = "com.sms1516.porcelli.daniele.wichat.action.START_NSD_SERVICE";
@@ -129,16 +127,12 @@ public class WiChatService extends Service {
             //Registra il WifiP2pBroadcastReceiver
             mReceiver = new WifiP2pBroadcastReceiver();
             registerReceiver(mReceiver, mIntentFilter);
-        }
-
-        else if(intent.getAction().equals(ACTION_START_NSD_SERVICE)) {
+        } else if (intent.getAction().equals(ACTION_START_NSD_SERVICE)) {
 
             //Avvia il servizio di network service discovery locale
             mNsdService = new NsdProviderThread();
             mNsdService.start();
-        }
-
-        else if (intent.getAction().equals(ACTION_CONNECT_TO_CLIENT)) {
+        } else if (intent.getAction().equals(ACTION_CONNECT_TO_CLIENT)) {
 
             //Recupera l'indirizzo MAC del dispositivo a cui connettersi
             final String device = intent.getStringExtra(ACTION_CONNECT_TO_CLIENT_EXTRA);
@@ -149,7 +143,7 @@ public class WiChatService extends Service {
             config.wps.setup = WpsInfo.PBC;
 
             //Imposta il dispositivo da connettersi nel BroadcastReceiver
-            ((WifiP2pBroadcastReceiver)mReceiver).setDeviceToConnect(device);
+            ((WifiP2pBroadcastReceiver) mReceiver).setDeviceToConnect(device);
 
             mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                 @Override
@@ -164,9 +158,7 @@ public class WiChatService extends Service {
                     mContactsListener.onContactDisconnected(device);
                 }
             });
-        }
-
-        else if (intent.getAction().equals(ACTION_DISCOVER_SERVICES)) {
+        } else if (intent.getAction().equals(ACTION_DISCOVER_SERVICES)) {
 
             //Registra la richiesta
             WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
@@ -223,33 +215,23 @@ public class WiChatService extends Service {
                     Log.e(LOG_TAG, "Impossibile iniziare la ricerca dei peers: " + errore);
                 }
             });
-        }
-
-        else if (intent.getAction().equals(ACTION_REGISTER_CONTACTS_LISTENER)) {
+        } else if (intent.getAction().equals(ACTION_REGISTER_CONTACTS_LISTENER)) {
 
             //Registra il ContactsListener
             mContactsListener = (ContactsListener) intent.getSerializableExtra(ACTION_REGISTER_CONTACTS_LISTENER_EXTRA);
-        }
-
-        else if (intent.getAction().equals(ACTION_UNREGISTER_CONTACTS_LISTENER)) {
+        } else if (intent.getAction().equals(ACTION_UNREGISTER_CONTACTS_LISTENER)) {
 
             //Rimuovi il ContactsListener
             mContactsListener = null;
-        }
-
-        else if (intent.getAction().equals(ACTION_REGISTER_MESSAGES_LISTENER)) {
+        } else if (intent.getAction().equals(ACTION_REGISTER_MESSAGES_LISTENER)) {
 
             //Registra il MessagesListener
             mMessagesListener = (MessagesListener) intent.getSerializableExtra(ACTION_REGISTER_MESSAGES_LISTENER_EXTRA);
-        }
-
-        else if (intent.getAction().equals(ACTION_UNREGISTER_MESSAGES_LISTENER)) {
+        } else if (intent.getAction().equals(ACTION_UNREGISTER_MESSAGES_LISTENER)) {
 
             //Rimuovi il MessagesListener
             mMessagesListener = null;
-        }
-
-        else if (intent.getAction().equals(ACTION_SEND_MESSAGE)) {
+        } else if (intent.getAction().equals(ACTION_SEND_MESSAGE)) {
 
             //Recupera il messaggio da inviare
             Message message = (Message) intent.getSerializableExtra(ACTION_SEND_MESSAGE_EXTRA);
@@ -260,7 +242,7 @@ public class WiChatService extends Service {
             boolean messageSent = false;
 
             //Cerca la connessione con il dato destinatario
-            for (ChatConnection conn: connections) {
+            for (ChatConnection conn : connections) {
                 if (conn.getMacAddress().equals(recipient)) {
 
                     //Invia il messaggio a questa connessione
@@ -307,7 +289,7 @@ public class WiChatService extends Service {
      * selezionato dall'utente.
      *
      * @param context L'oggetto di tipo Context che rappresenta il contesto dell'applicazione.
-     * @param device Indirizzo MAC del dispositivo a cui connettersi rappresentato in forma testuale.
+     * @param device  Indirizzo MAC del dispositivo a cui connettersi rappresentato in forma testuale.
      */
     public static void connectToClient(Context context, String device) {
         Intent connectToClientIntent = new Intent(context, WiChatService.class);
@@ -332,10 +314,10 @@ public class WiChatService extends Service {
     /**
      * Registra in WiChatService l'activity interessata ai contatti.
      *
-     * @param context L'oggetto di tipo Context che rappresenta il contesto dell'applicazione.
+     * @param context          L'oggetto di tipo Context che rappresenta il contesto dell'applicazione.
      * @param contactsListener Una activity che implementa l'interfaccia ContactsListener.
      */
-    public static void registerContactsListener(Context context, ContactsListener contactsListener){
+    public static void registerContactsListener(Context context, ContactsListener contactsListener) {
         Intent registerContactsListenerIntent = new Intent(context, WiChatService.class);
         registerContactsListenerIntent.setAction(ACTION_REGISTER_CONTACTS_LISTENER);
         registerContactsListenerIntent.putExtra(ACTION_REGISTER_CONTACTS_LISTENER_EXTRA, contactsListener);
@@ -356,7 +338,7 @@ public class WiChatService extends Service {
     /**
      * Registra in WiChatService l'activity interessata ai messaggi.
      *
-     * @param context L'oggetto di tipo Context che rappresenta il contesto dell'applicazione.
+     * @param context          L'oggetto di tipo Context che rappresenta il contesto dell'applicazione.
      * @param messagesListener Una activity che implementa l'interfaccia MessagesListener.
      */
     public static void registerMessagesListener(Context context, MessagesListener messagesListener) {
@@ -401,11 +383,11 @@ public class WiChatService extends Service {
 
         //Implementazione del PeerListListener
         //Nota: probabilmente non ci servirà, ma lo lascio per sicurezza.
-        private WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
+        /*private WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
 
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peerList) {
-                /*
+
                 //Elimina tutti i vecchi dispositivi trovati e inserisce quelli nuovi
                 peers.clear();
                 peers.addAll(peerList.getDeviceList());
@@ -413,9 +395,9 @@ public class WiChatService extends Service {
                 //Manda la lista dei dispositivi appena trovati all'activity interessata
                 if (mContactsListener != null)
                     //mContactsListener.onContactsListChanged(peers);
-                ;*/
+                ;
             }
-        };
+        };*/
 
         //Implementazione del ConnectionInfoListener per recuperare l'indirizzo IP
         //del dispositivo a cui si è appena connessi
@@ -434,8 +416,12 @@ public class WiChatService extends Service {
                 try {
                     ChatConnection chatConnection = new ChatConnection(deviceIP, port, device);
                     connections.add(chatConnection);
-                }
-                catch (IOException ex) {
+
+                    //Invia il messaggio DUMMY per far registrare l'indirizzo MAC di questo dispositivo
+                    //al dispositivo destinatario.
+                    chatConnection.sendMessage(new Message(thisDeviceMAC, DUMMY_MESSAGE));
+
+                } catch (IOException ex) {
                     Log.e(LOG_TAG, "Non è stato possibile connettersi con " + device + ": " + ex.toString());
                     mContactsListener.onContactDisconnected(device);
                 }
@@ -446,17 +432,21 @@ public class WiChatService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-            if(action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
+            if (action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
 
                 //Controlla se il Wi-Fi P2P è attivo e supportato dal dispositivo
                 int statoWiFi = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
                 if (statoWiFi == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
 
+                    //Ottiene l'indirizzo MAC di questo dispositivo
+                    WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                    WifiInfo info = wifiManager.getConnectionInfo();
+                    thisDeviceMAC = info.getMacAddress();
+
                     //Chiama WiChatService per registrare il servizio di network service discovery
                     WiChatService.registerNsdService(context);
                 }
-            }
-            else if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
+            } else if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
 
                 //Questo dispositivo si è appena connesso con un altro tramite Wi-Fi direct.
                 //Recuperiamo le informazioni di connessione di conseguenza.
@@ -470,9 +460,7 @@ public class WiChatService extends Service {
                     //Si è appena connesso al dispositivo remoto, otteniamo le informazioni della connessione
                     mManager.requestConnectionInfo(mChannel, connectionInfoListener);
                 }
-            }
-
-            else if (action.equals(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)) {
+            } else if (action.equals(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)) {
 
                 //Recupera la nuova lista di contatti disponibili nel range del Wi-Fi
                 //Nota: probabilmente neanche questo ci servirà, ma lo teniamo per sicurezza.
@@ -553,8 +541,7 @@ public class WiChatService extends Service {
             ServerSocket server;
             try {
                 server = new ServerSocket(0);
-            }
-            catch(IOException ex) {
+            } catch (IOException ex) {
                 Log.e(LOG_TAG, "Impossibile avviare il server: " + ex.toString());
                 return;
             }
@@ -605,12 +592,11 @@ public class WiChatService extends Service {
             mManager.setDnsSdResponseListeners(mChannel, serviceListener, txtRecordListener);
 
             //Avvia l'ascolto di connessioni in entrata
-            while(!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = null;
                 try {
                     clientSocket = server.accept();
-                }
-                catch  (IOException ex) {
+                } catch (IOException ex) {
                     Log.e(LOG_TAG, "Impossibile avviare il server: " + ex.toString());
                     break;
                 }
@@ -619,8 +605,7 @@ public class WiChatService extends Service {
                     synchronized (connections) {
                         connections.add(chatConn);
                     }
-                }
-                catch (IOException ex) {
+                } catch (IOException ex) {
                     //Errore durante la connessione con il client
                     Log.e(LOG_TAG, "Errore durante la connessione con il client: " + ex.toString());
 
@@ -670,7 +655,8 @@ public class WiChatService extends Service {
          * connessione con il server del dispositivo remoto.
          *
          * @param srvAddress L'indirizzo IP del dispositivo che ospita il server.
-         * @param srvPort La porta sul quale è in ascolto il server.
+         * @param srvPort    La porta sul quale è in ascolto il server.
+         * @param macAddress L'indirizzo MAC del dispositivo remoto in forma testuale.
          */
         public ChatConnection(InetAddress srvAddress, int srvPort, String macAddress) throws IOException {
             connSocket = new Socket(srvAddress, srvPort);
@@ -697,14 +683,15 @@ public class WiChatService extends Service {
         }
 
         /**
+         * Nota: probabilmente non ci servirà.
          * Imposta l'indirizzo MAC del dispositivo remoto con cui si
          * è connessi.
          *
          * @param macAddress L'indirizzo MAC del dispositivo con cui si è connessi in forma di stringa.
-         */
+         *
         public void setMacAddress(String macAddress) {
             this.macAddress = macAddress;
-        }
+        }*/
 
         /**
          * Restituisce l'indirizzo MAC del dispositivo remoto con il quale si è connessi.
@@ -733,6 +720,7 @@ public class WiChatService extends Service {
             public ReceivingThread() throws IOException {
                 objectInputStream = new ObjectInputStream(connSocket.getInputStream());
             }
+
             @Override
             public void run() {
                 try {
@@ -745,30 +733,30 @@ public class WiChatService extends Service {
                                 if (macAddress == null)
                                     macAddress = message.getSender();
 
-                                //Manda il messaggio all'activity interessata se è registrata
-                                if (mMessagesListener != null) {
-                                    synchronized (mMessagesListener) {
-                                        if (mMessagesListener.getRecipient().equals(macAddress))
-                                            mMessagesListener.onMessageReceived(message);
+                                if (!message.getText().equals(DUMMY_MESSAGE)) {
+
+                                    //Manda il messaggio all'activity interessata se è registrata
+                                    if (mMessagesListener != null) {
+                                        synchronized (mMessagesListener) {
+                                            if (mMessagesListener.getRecipient().equals(macAddress))
+                                                mMessagesListener.onMessageReceived(message);
+                                        }
+                                    } else if (mContactsListener != null) {
+
+                                        //Manda il messaggio all'activity principale che notificherà
+                                        //l'arrivo di un nuovo messaggio
+                                        synchronized (mContactsListener) {
+                                            mContactsListener.onMessageReceived(message);
+                                        }
+
+                                        //Salva il messaggio in memoria cosicché l'activity interessata
+                                        //potrà recuperarlo e mostrarlo all'utente
+                                        mMessagesStore.saveMessage(message);
+                                    } else {
+
+                                        //Salva il messaggio nella memoria interna e nient'altro
+                                        mMessagesStore.saveMessage(message);
                                     }
-                                }
-                                else if (mContactsListener != null) {
-
-                                    //Manda il messaggio all'activity principale che notificherà
-                                    //l'arrivo di un nuovo messaggio
-                                    synchronized (mContactsListener) {
-                                        mContactsListener.onMessageReceived(message);
-                                    }
-
-                                    //Salva il messaggio in memoria cosicché l'activity interessata
-                                    //potrà recuperarlo e mostrarlo all'utente
-                                    mMessagesStore.saveMessage(message);
-                                }
-
-                                else {
-
-                                    //Salva il messaggio nella memoria interna e nient'altro
-                                    mMessagesStore.saveMessage(message);
                                 }
                             }
 
@@ -777,8 +765,7 @@ public class WiChatService extends Service {
                             //In caso di errore, interrompi il ciclo
                             Log.e(LOG_TAG, ex.toString());
                             break;
-                        }
-                        catch (EOFException ex) {
+                        } catch (EOFException ex) {
 
                             //Questa eccezione indica che il dispositivo remoto ha chiuso lo stream
                             //di output. Quindi chiudi la connessione.
@@ -788,8 +775,7 @@ public class WiChatService extends Service {
                     }
                     objectInputStream.close();
                     closeConnection();
-                }
-                catch(IOException ex) {
+                } catch (IOException ex) {
                     //Non è riuscito a chiudere lo stream
                     Log.e(LOG_TAG, "Impossibile chiudere lo stream di input dei messaggi: " + ex.toString());
                 }
@@ -806,7 +792,7 @@ public class WiChatService extends Service {
 
             //Variabili d'istanza
             private BlockingQueue<Message> messagesQueue;
-            ObjectOutputStream oos;
+            private ObjectOutputStream oos;
 
             //Costanti statiche
             private static final int QUEUE_CAPACITY = 10;
@@ -835,13 +821,11 @@ public class WiChatService extends Service {
 
                         //Manda il messaggio appena ottenuto dalla coda dei messaggi
                         oos.writeObject(messageToSend);
-                    }
-                    catch (IOException ex) {
+                    } catch (IOException ex) {
                         //Errore durante l'invio del messaggio prelevato
                         Log.e(LOG_TAG, "Errore durante l'invio del messaggio: " + ex.toString());
                         break;
-                    }
-                    catch (InterruptedException ex) {
+                    } catch (InterruptedException ex) {
                         //Si è verificata un'interruzione durante l'ottenimento
                         //del messaggio da inviare
                         Log.e(LOG_TAG, "Interruzione durante il prelevamento del messaggio da inviare: " + ex.toString());
@@ -852,8 +836,7 @@ public class WiChatService extends Service {
                 //Chiudi lo stream di output
                 try {
                     oos.close();
-                }
-                catch (IOException ex) {
+                } catch (IOException ex) {
 
                     //Segnala l'eccezione, nulla di più
                     Log.e(LOG_TAG, "Errore durante la chiusura dello stream di output: " + ex.toString());
@@ -881,8 +864,7 @@ public class WiChatService extends Service {
             //Chiude il socket di comunicazione
             try {
                 connSocket.close();
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 Log.e(LOG_TAG, "Errore durante la chiusura del socket: " + ex.toString());
             }
 
@@ -893,7 +875,8 @@ public class WiChatService extends Service {
 
             //Informa le activity della rimozione del dispositivo
             synchronized (mContactsListener) {
-                mContactsListener.onContactDisconnected(macAddress);
+                if (mContactsListener != null)
+                    mContactsListener.onContactDisconnected(macAddress);
             }
 
             if (mMessagesListener != null) {
