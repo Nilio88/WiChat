@@ -9,7 +9,7 @@
         android:layout_height="@dimen/logo_height"
         android:layout_width="@dimen/logo_width"
         android:src="@drawable/wichat"
-        android:layout_gravity="center">
+        android:layout_gravity="center" >
 
     </ImageView>
 
