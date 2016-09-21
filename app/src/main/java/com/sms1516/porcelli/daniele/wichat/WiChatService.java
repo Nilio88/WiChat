@@ -437,14 +437,24 @@ public class WiChatService extends Service {
                 //Controlla se il Wi-Fi P2P è attivo e supportato dal dispositivo
                 int statoWiFi = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
                 if (statoWiFi == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                    if (thisDeviceMAC == null) {
 
-                    //Ottiene l'indirizzo MAC di questo dispositivo
-                    WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                    WifiInfo info = wifiManager.getConnectionInfo();
-                    thisDeviceMAC = info.getMacAddress();
+                        //Ottiene l'indirizzo MAC di questo dispositivo
+                        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                        WifiInfo info = wifiManager.getConnectionInfo();
+                        thisDeviceMAC = info.getMacAddress();
+                    }
 
                     //Chiama WiChatService per registrare il servizio di network service discovery
                     WiChatService.registerNsdService(context);
+
+                }
+                else {
+
+                    //Nel caso il Wi-Fi è stato disattivato, interrompi il thread del NSD
+                    if (mNsdService != null && !mNsdService.isInterrupted()) {
+                        mNsdService.interrupt();
+                    }
                 }
             } else if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
 
@@ -613,6 +623,12 @@ public class WiChatService extends Service {
                     continue;
                 }
 
+            }
+            try {
+                server.close();
+            }
+            catch(IOException ex) {
+                //Niente di importante da fare.
             }
         }
     }
