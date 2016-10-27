@@ -37,19 +37,29 @@
         <activity android:name=".MainActivity" />
 
         <service
-            android:name=".WiChatService"
-            android:enabled="false"
-            android:exported="false" />
+            android:name="com.sms1516.porcelli.daniele.wichat.WiChatService"
+            android:exported="true" />
 
         <activity android:name=".ConversationActivity" />
 
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true">
+
             <intent-filter>
+
+                <!-- Intent di broadcast lanciato da Android quando si avvia dallo stato spento. -->
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+
+                <!-- Intent di broadcast lanciato da Android quando ha finito di eseguire il riavvio del dispositivo -->
+                <action android:name="android.intent.action.REBOOT" />
+
+                <!-- Intent di broadcast lanciato da Android quando ha finito di eseguire il riavvio del dispositivo (solo alcuni dispositivi inviano quest'altro tipo di intent) -->
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+
             </intent-filter>
+
         </receiver>
 
     </application>

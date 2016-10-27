@@ -20,7 +20,7 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-        if (action.equals("android.intent.action.BOOT_COMPLETED")) {
+        if (action.equals(Intent.ACTION_BOOT_COMPLETED) || action.equals(Intent.ACTION_REBOOT) || action.equals("android.intent.action.QUICKBOOT_POWERON")) {
 
             //Avvia il servizio WiChatService
             context.startService(new Intent(context, WiChatService.class));
